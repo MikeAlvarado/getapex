@@ -8,6 +8,9 @@ km/h / mph display toggle.
 The product spec lives in [`docs/BRIEF.md`](docs/BRIEF.md); contributor rules in
 [`CLAUDE.md`](CLAUDE.md).
 
+The header shows the current version next to the logo, from `src/version.ts`
+(kept in sync with `package.json`'s `version` field — bump both together).
+
 ## Features
 
 - **Track editor**, two tools:
@@ -25,9 +28,11 @@ The product spec lives in [`docs/BRIEF.md`](docs/BRIEF.md); contributor rules in
   power, drag CdA, downforce ClA, tire grip μ, brake force, and traction limit.
   Every change re-optimizes the line, so cause and effect are visible: more
   downforce → faster sweepers, more drag → lower top speed.
-- **Outputs** — speed-heatmap racing line, braking zones, apex markers with
-  corner numbers, per-corner cards (entry/apex/exit speed, braking distance,
-  min radius), speed-vs-distance trace with hover sync to the map, lap time.
+- **Outputs** — speed-heatmap racing line (bold, saturated ramp), braking
+  zones drawn as a solid red overlay on top of the speed color, apex markers
+  with corner numbers, per-corner cards (entry/apex/exit speed, braking
+  distance, min radius), speed-vs-distance trace with hover sync to the map,
+  lap time.
 - **Persistence** — everything survives reload via `localStorage`; tracks and
   setups export/import as JSON.
 
@@ -134,6 +139,11 @@ speed colors), overlays, and the in-progress stroke/pen path. React never
 re-renders per frame — a cheap dirty-check stamp (ids, versions, view
 transform) skips redraws when nothing changed. DPR-aware bitmap sizing keeps
 it crisp on retina displays.
+
+The speed ramp (`features/racing-line/colorScale.ts`, mirrored in the HUD
+legend and `--speed-slow`/`--speed-fast` tokens) is drawn wide and saturated
+for readability; braking zones are stroked *after* the speed color, as a
+solid opaque red, so they read as a clear overlay rather than a thin edge.
 
 ## Architecture
 

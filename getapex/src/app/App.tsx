@@ -9,6 +9,7 @@ import { TrackControls } from '@/features/track-editor/TrackControls'
 import { Segmented } from '@/components/ui/Segmented'
 import { formatDistance, formatLapTime, formatSpeed } from '@/lib/units'
 import { t } from '@/i18n/strings'
+import { APP_VERSION } from '@/version'
 import type { Units } from '@/types'
 
 const UNIT_OPTIONS: ReadonlyArray<{ value: Units; label: string }> = [
@@ -52,6 +53,7 @@ export function App() {
       <header className="app-header">
         <div className="brand">
           <span className="brand-name">APEX</span>
+          <span className="brand-version">v{APP_VERSION}</span>
           <span className="brand-tag">{t('app.tagline')}</span>
         </div>
         <div

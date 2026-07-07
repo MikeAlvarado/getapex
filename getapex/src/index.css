@@ -66,6 +66,16 @@ button {
   color: var(--accent);
 }
 
+.brand-version {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-faint);
+  padding: 1px 5px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+}
+
 .brand-tag {
   font-size: 11px;
   color: var(--text-faint);
@@ -298,7 +308,7 @@ button {
   width: 72px;
   height: 6px;
   border-radius: 3px;
-  background: linear-gradient(90deg, #4a6df0, #2fbfa4, #8fd44a, #ffd23a, #ffb03a);
+  background: linear-gradient(90deg, #2b62ff, #00d4b0, #60de22, #ffe000, #ff8500);
 }
 
 .legend-item {

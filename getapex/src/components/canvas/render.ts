@@ -31,7 +31,7 @@ const COLORS = {
   boundary: '#323a45',
   centerline: 'rgba(120, 132, 148, 0.35)',
   stroke: '#e8eaed',
-  brakeZone: 'rgba(255, 81, 71, 0.85)',
+  brakeZone: '#ff3b2f',
   apexFill: '#e8eaed',
   apexStroke: '#0b0d10',
   label: '#9aa3af',
@@ -148,10 +148,23 @@ function drawRacingLine(ctx: CanvasRenderingContext2D, scene: Scene) {
   }
   const span = Math.max(vMax - vMin, 0.1)
 
-  // braking zones: red casing beneath the line
+  // heatmap line, one segment per point pair — drawn first so braking can
+  // sit on top of it rather than peek out as a thin casing.
   ctx.lineCap = 'round'
+  ctx.lineWidth = 5
+  for (let i = 0; i < n; i++) {
+    const p = worldToScreen(view, line[i])
+    const q = worldToScreen(view, line[(i + 1) % n])
+    ctx.strokeStyle = speedColor((velocity[i].v - vMin) / span)
+    ctx.beginPath()
+    ctx.moveTo(p.x, p.y)
+    ctx.lineTo(q.x, q.y)
+    ctx.stroke()
+  }
+
+  // braking zones: solid red overlay on top of the speed color
   ctx.strokeStyle = COLORS.brakeZone
-  ctx.lineWidth = 7
+  ctx.lineWidth = 5
   ctx.beginPath()
   let penDown = false
   for (let i = 0; i < n; i++) {
@@ -172,18 +185,6 @@ function drawRacingLine(ctx: CanvasRenderingContext2D, scene: Scene) {
     }
   }
   ctx.stroke()
-
-  // heatmap line, one segment per point pair
-  ctx.lineWidth = 3
-  for (let i = 0; i < n; i++) {
-    const p = worldToScreen(view, line[i])
-    const q = worldToScreen(view, line[(i + 1) % n])
-    ctx.strokeStyle = speedColor((velocity[i].v - vMin) / span)
-    ctx.beginPath()
-    ctx.moveTo(p.x, p.y)
-    ctx.lineTo(q.x, q.y)
-    ctx.stroke()
-  }
 
   // selected corner: white halo over its span
   if (scene.selectedCorner !== null) {

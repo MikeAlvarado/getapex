@@ -18,13 +18,13 @@
   --accent: #ff4d36; /* apex red */
   --accent-dim: #b53826;
   --ok: #3fd07f;
-  --brake: #ff5147;
+  --brake: #ff3b2f;
   --throttle: #3fd07f;
   --coast: #8b93a1;
 
   /* speed ramp anchors (cool = slow → warm = fast) */
-  --speed-slow: #4a6df0;
-  --speed-fast: #ffb03a;
+  --speed-slow: #2b62ff;
+  --speed-fast: #ff8500;
 
   /* type */
   --font-ui: 'Inter Tight', system-ui, -apple-system, 'Segoe UI', sans-serif;

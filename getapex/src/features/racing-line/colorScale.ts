@@ -1,10 +1,10 @@
 /** Speed heatmap ramp: cool (slow) → warm (fast). Matches the HUD legend. */
 const STOPS: Array<[number, number, number]> = [
-  [74, 109, 240], // #4a6df0
-  [47, 191, 164], // #2fbfa4
-  [143, 212, 74], // #8fd44a
-  [255, 210, 58], // #ffd23a
-  [255, 176, 58], // #ffb03a
+  [43, 98, 255], // #2b62ff
+  [0, 212, 176], // #00d4b0
+  [96, 222, 34], // #60de22
+  [255, 224, 0], // #ffe000
+  [255, 133, 0], // #ff8500
 ]
 
 /** t ∈ [0, 1] → CSS color along the speed ramp. */
