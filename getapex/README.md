@@ -16,8 +16,11 @@ The product spec lives in [`docs/BRIEF.md`](docs/BRIEF.md); contributor rules in
   - *Pen* — Illustrator-style: click places a corner anchor, click-drag pulls
     out symmetric Bézier handles, clicking the first anchor closes the loop
     (**Enter** closes, **Backspace** removes the last anchor, **Esc** cancels).
-- **Sample circuits** (Grand Prix, Kart Sprint, Speedway) built from control
-  polygons through the same pipeline as drawn tracks.
+- **Sample circuits** — Grand Prix, Kart Sprint, Speedway, Paddock Kart (a
+  second, more technical kart layout), Harbor City (a street circuit with
+  90° corners and a chicane), and Ardennes GP (a fast, flowing GP-style
+  circuit with a tight hairpin, an uphill esses, and a closing chicane) — all
+  built from control polygons through the same pipeline as drawn tracks.
 - **Car setup** — F1 / GT3 / Street / Kart presets plus sliders for mass,
   power, drag CdA, downforce ClA, tire grip μ, brake force, and traction limit.
   Every change re-optimizes the line, so cause and effect are visible: more
@@ -50,6 +53,13 @@ racing line with a velocity profile and corner analysis comes out.
 
 Track boundaries are the centerline offset ±w/2 along per-point normals. The
 racing line may use half-width `w/2 − carWidth/2 − margin`.
+
+Width is capped to what the tightest corner can carry (`maxSafeWidth` in
+`lib/track/buildTrack.ts`, ≈ 2× the smallest radius of curvature minus a
+clearance): a hairpin sharper than the requested width would otherwise offset
+the boundary past itself. The cap applies wherever a track's width can
+change — drawing, the track-width slider, sample selection, JSON import, and
+`localStorage` hydration — so the boundary can never self-intersect.
 
 ### 2. Racing line — minimum-curvature QP (`lib/optimizer/minCurvature.ts`)
 

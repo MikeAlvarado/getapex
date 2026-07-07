@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { CarPresetId, CarSetup, ComputeStatus, RacingLineResult, Track, Units } from '@/types'
 import { CAR_PRESETS } from '@/features/car-config/presets'
+import { maxSafeWidth } from '@/lib/track/buildTrack'
 
 export interface TrackSlice {
   track: Track | null
@@ -56,10 +57,10 @@ export const useStore = create<AppState>((set) => ({
   margin: 0.5,
   setTrack: (track) => set({ track, selectedCorner: null, hoverIndex: null }),
   setTrackWidth: (trackWidth) =>
-    set((s) => ({
-      trackWidth,
-      track: s.track ? { ...s.track, width: trackWidth } : null,
-    })),
+    set((s) => {
+      const width = s.track ? Math.min(trackWidth, maxSafeWidth(s.track.centerline)) : trackWidth
+      return { trackWidth: width, track: s.track ? { ...s.track, width } : null }
+    }),
   setMargin: (margin) =>
     set((s) => ({
       margin,

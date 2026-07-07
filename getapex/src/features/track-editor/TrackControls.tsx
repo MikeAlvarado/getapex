@@ -3,10 +3,14 @@ import { useStore } from '@/state/store'
 import { Panel } from '@/components/ui/Panel'
 import { Slider } from '@/components/ui/Slider'
 import { Button } from '@/components/ui/Button'
+import { clampTrackWidth, maxSafeWidth } from '@/lib/track/buildTrack'
 import { loadSample } from './loadSample'
 import { SAMPLE_TRACKS } from './sampleTracks'
 import { exportSetup, parseSetupFile } from './io'
 import { t } from '@/i18n/strings'
+
+const WIDTH_MIN = 6
+const WIDTH_MAX = 25
 
 export function TrackControls() {
   const track = useStore((s) => s.track)
@@ -15,6 +19,8 @@ export function TrackControls() {
   const setTrackWidth = useStore((s) => s.setTrackWidth)
   const setMargin = useStore((s) => s.setMargin)
   const car = useStore((s) => s.car)
+  const widthMax = track ? Math.min(WIDTH_MAX, maxSafeWidth(track.centerline)) : WIDTH_MAX
+  const widthMin = Math.min(WIDTH_MIN, widthMax)
   const fileRef = useRef<HTMLInputElement>(null)
   const [importError, setImportError] = useState(false)
 
@@ -23,10 +29,11 @@ export function TrackControls() {
       const { track: importedTrack, car: importedCar } = parseSetupFile(await file.text())
       setImportError(false)
       if (importedTrack) {
+        const track = clampTrackWidth(importedTrack)
         useStore.setState({
-          track: importedTrack,
-          trackWidth: importedTrack.width,
-          margin: importedTrack.margin,
+          track,
+          trackWidth: track.width,
+          margin: track.margin,
           selectedCorner: null,
           hoverIndex: null,
         })
@@ -44,8 +51,8 @@ export function TrackControls() {
       <Slider
         label={t('track.width')}
         value={trackWidth}
-        min={6}
-        max={25}
+        min={widthMin}
+        max={widthMax}
         step={0.5}
         displayValue={`${trackWidth.toFixed(1)} m`}
         onChange={setTrackWidth}

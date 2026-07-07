@@ -2,9 +2,24 @@ import type { Track, Vec2 } from '@/types'
 import { rdp } from '@/lib/geometry/rdp'
 import { sampleClosedBezierPath, type BezierAnchor } from '@/lib/geometry/bezier'
 import { sampleClosedCatmullRom } from '@/lib/geometry/catmullRom'
+import { closedCurvature } from '@/lib/geometry/curvature'
 import { closedLength, resampleClosedByArcLength } from '@/lib/geometry/resample'
 import { closedNormals, offsetClosedPath } from '@/lib/geometry/offsetPath'
 import { dist } from '@/lib/geometry/vec2'
+
+/** Below this, a track corridor is too pinched to be a usable circuit at any width. */
+const MIN_VIABLE_WIDTH = 3
+
+/**
+ * Widest a track's boundary can be offset from `centerline` before the
+ * tightest corner's inside edge would cross itself — i.e. 2× the smallest
+ * radius of curvature, with a little clearance so it never pinches to zero.
+ */
+export function maxSafeWidth(centerline: readonly Vec2[]): number {
+  const maxAbsKappa = Math.max(0, ...closedCurvature(centerline).map(Math.abs))
+  if (maxAbsKappa < 1e-9) return Infinity
+  return 2 * (1 / maxAbsKappa - 1)
+}
 
 export interface BuildTrackOptions {
   id: string
@@ -84,15 +99,25 @@ function densePathToTrack(dense: readonly Vec2[], opts: BuildTrackOptions): Trac
   if (points.length < 32) {
     throw new TrackBuildError('Circuit too small. Draw a larger loop')
   }
+  const safeWidth = maxSafeWidth(points)
+  if (safeWidth < MIN_VIABLE_WIDTH) {
+    throw new TrackBuildError('Corners too tight for a track. Draw wider turns')
+  }
   return {
     id: opts.id,
     name: opts.name,
     centerline: points,
     ds,
-    width: opts.width,
+    width: Math.min(opts.width, safeWidth),
     margin: opts.margin,
     length,
   }
+}
+
+/** Clamp a track's width to what its own centerline can safely carry (e.g. after import). */
+export function clampTrackWidth(track: Track): Track {
+  const safeWidth = Math.min(track.width, maxSafeWidth(track.centerline))
+  return safeWidth === track.width ? track : { ...track, width: safeWidth }
 }
 
 export interface TrackBoundaries {

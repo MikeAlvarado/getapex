@@ -1,4 +1,5 @@
 import type { CarPresetId, CarSetup, Track, Units, Vec2 } from '@/types'
+import { clampTrackWidth } from '@/lib/track/buildTrack'
 import { useStore } from './store'
 
 const STORAGE_KEY = 'getapex:v1'
@@ -63,8 +64,12 @@ export function loadPersisted(): Partial<PersistedState> {
     if (typeof data !== 'object' || data === null) return {}
     const d = data as Record<string, unknown>
     const out: Partial<PersistedState> = {}
-    if (isTrack(d.track)) out.track = d.track
-    if (isNumber(d.trackWidth)) out.trackWidth = d.trackWidth
+    if (isTrack(d.track)) {
+      out.track = clampTrackWidth(d.track)
+      out.trackWidth = out.track.width
+    } else if (isNumber(d.trackWidth)) {
+      out.trackWidth = d.trackWidth
+    }
     if (isNumber(d.margin)) out.margin = d.margin
     if (isCarSetup(d.car)) out.car = d.car
     if (d.presetId === 'custom' || typeof d.presetId === 'string') {
