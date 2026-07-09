@@ -1,23 +1,18 @@
-import { useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import { useStore } from '@/state/store'
 import { useResizeObserver } from '@/hooks/useResizeObserver'
 import { formatSpeed, speedValue, speedUnit } from '@/lib/units'
 import { t } from '@/i18n/strings'
-import type { VelocityPoint } from '@/types'
+import type { Phase } from '@/types'
 
 const MARGIN = { top: 8, right: 10, bottom: 16, left: 40 }
 const HEIGHT = 128
-
-type Phase = 'throttle' | 'brake' | 'coast'
 
 const PHASE_COLOR: Record<Phase, string> = {
   throttle: 'var(--throttle)',
   brake: 'var(--brake)',
   coast: 'var(--coast)',
 }
-
-const phaseOf = (p: VelocityPoint): Phase =>
-  p.aLong > 0.25 ? 'throttle' : p.aLong < -0.25 ? 'brake' : 'coast'
 
 /** Nice tick pitch on a 1-2-5 ladder near `target`. */
 function tickPitch(target: number): number {
@@ -26,8 +21,7 @@ function tickPitch(target: number): number {
 }
 
 export function SpeedTrace() {
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const { width } = useResizeObserver(wrapRef)
+  const { ref: wrapRef, width } = useResizeObserver()
   const result = useStore((s) => s.result)
   const units = useStore((s) => s.units)
   const hoverIndex = useStore((s) => s.hoverIndex)
@@ -48,11 +42,11 @@ export function SpeedTrace() {
 
     // contiguous phase runs → one path each
     const segments: Array<{ phase: Phase; d: string }> = []
-    let runPhase = phaseOf(pts[0])
+    let runPhase = pts[0].phase
     let d = `M${x(pts[0].s).toFixed(1)},${y(pts[0].v).toFixed(1)}`
     for (let i = 1; i < pts.length; i++) {
       d += `L${x(pts[i].s).toFixed(1)},${y(pts[i].v).toFixed(1)}`
-      const phase = i < pts.length - 1 ? phaseOf(pts[i]) : runPhase
+      const phase = i < pts.length - 1 ? pts[i].phase : runPhase
       if (phase !== runPhase) {
         segments.push({ phase: runPhase, d })
         runPhase = phase
@@ -74,10 +68,9 @@ export function SpeedTrace() {
     return { x, y, vMax, segments, xTicks, yTicks, yFromDisplay, plotH }
   }, [result, width, units])
 
-  if (!result || !geometry) return null
+  if (!result) return null
 
   const { velocity, corners, lineLength } = result
-  const { x, y, segments, xTicks, yTicks, yFromDisplay } = geometry
 
   const indexFromClientX = (clientX: number, rect: DOMRect): number | null => {
     const s =
@@ -104,128 +97,130 @@ export function SpeedTrace() {
           {hovered ? `${Math.round(hovered.s)} m · ${formatSpeed(hovered.v, units)}` : ''}
         </span>
       </div>
-      <svg
-        width={width}
-        height={HEIGHT}
-        role="img"
-        aria-label={t('results.speedTrace')}
-        onPointerMove={(e) => {
-          const idx = indexFromClientX(e.clientX, e.currentTarget.getBoundingClientRect())
-          setHoverIndex(idx)
-        }}
-        onPointerLeave={() => setHoverIndex(null)}
-      >
-        {/* selected corner band */}
-        {selected && (
-          <rect
-            x={x(velocity[selected.brakingIdx ?? selected.startIdx].s)}
-            y={MARGIN.top}
-            width={Math.max(
-              2,
-              x(velocity[selected.endIdx].s) -
-                x(velocity[selected.brakingIdx ?? selected.startIdx].s),
-            )}
-            height={HEIGHT - MARGIN.top - MARGIN.bottom}
-            fill="rgba(232, 234, 237, 0.07)"
-          />
-        )}
-
-        {/* grid + axes */}
-        {yTicks.map((vDisp) => (
-          <g key={`y${vDisp}`}>
-            <line
-              x1={MARGIN.left}
-              x2={width - MARGIN.right}
-              y1={yFromDisplay(vDisp)}
-              y2={yFromDisplay(vDisp)}
-              stroke="rgba(140, 155, 175, 0.12)"
-            />
-            <text
-              x={MARGIN.left - 6}
-              y={yFromDisplay(vDisp) + 3}
-              textAnchor="end"
-              fontSize={9}
-              fill="var(--text-faint)"
-              fontFamily="var(--font-mono)"
-            >
-              {vDisp}
-            </text>
-          </g>
-        ))}
-        <text
-          x={MARGIN.left - 6}
-          y={MARGIN.top + 4}
-          textAnchor="end"
-          fontSize={9}
-          fill="var(--text-faint)"
-          fontFamily="var(--font-mono)"
+      {geometry && (
+        <svg
+          width={width}
+          height={HEIGHT}
+          role="img"
+          aria-label={t('results.speedTrace')}
+          onPointerMove={(e) => {
+            const idx = indexFromClientX(e.clientX, e.currentTarget.getBoundingClientRect())
+            setHoverIndex(idx)
+          }}
+          onPointerLeave={() => setHoverIndex(null)}
         >
-          {speedUnit(units)}
-        </text>
-        {xTicks.map((s) => (
+          {/* selected corner band */}
+          {selected && (
+            <rect
+              x={geometry.x(velocity[selected.brakingIdx ?? selected.startIdx].s)}
+              y={MARGIN.top}
+              width={Math.max(
+                2,
+                geometry.x(velocity[selected.endIdx].s) -
+                  geometry.x(velocity[selected.brakingIdx ?? selected.startIdx].s),
+              )}
+              height={HEIGHT - MARGIN.top - MARGIN.bottom}
+              fill="rgba(232, 234, 237, 0.07)"
+            />
+          )}
+
+          {/* grid + axes */}
+          {geometry.yTicks.map((vDisp) => (
+            <g key={`y${vDisp}`}>
+              <line
+                x1={MARGIN.left}
+                x2={width - MARGIN.right}
+                y1={geometry.yFromDisplay(vDisp)}
+                y2={geometry.yFromDisplay(vDisp)}
+                stroke="rgba(140, 155, 175, 0.12)"
+              />
+              <text
+                x={MARGIN.left - 6}
+                y={geometry.yFromDisplay(vDisp) + 3}
+                textAnchor="end"
+                fontSize={9}
+                fill="var(--text-faint)"
+                fontFamily="var(--font-mono)"
+              >
+                {vDisp}
+              </text>
+            </g>
+          ))}
           <text
-            key={`x${s}`}
-            x={x(s)}
-            y={HEIGHT - 4}
-            textAnchor="middle"
+            x={MARGIN.left - 6}
+            y={MARGIN.top + 4}
+            textAnchor="end"
             fontSize={9}
             fill="var(--text-faint)"
             fontFamily="var(--font-mono)"
           >
-            {s >= 1000 ? `${(s / 1000).toFixed(1)}k` : s}
+            {speedUnit(units)}
           </text>
-        ))}
-
-        {/* corner apex markers */}
-        {corners.map((corner) => (
-          <g key={corner.number}>
-            <line
-              x1={x(velocity[corner.apexIdx].s)}
-              x2={x(velocity[corner.apexIdx].s)}
-              y1={MARGIN.top}
-              y2={HEIGHT - MARGIN.bottom}
-              stroke="rgba(140, 155, 175, 0.18)"
-              strokeDasharray="2 3"
-            />
+          {geometry.xTicks.map((s) => (
             <text
-              x={x(velocity[corner.apexIdx].s)}
-              y={MARGIN.top + 7}
+              key={`x${s}`}
+              x={geometry.x(s)}
+              y={HEIGHT - 4}
               textAnchor="middle"
-              fontSize={8.5}
+              fontSize={9}
               fill="var(--text-faint)"
               fontFamily="var(--font-mono)"
             >
-              T{corner.number}
+              {s >= 1000 ? `${(s / 1000).toFixed(1)}k` : s}
             </text>
-          </g>
-        ))}
+          ))}
 
-        {/* speed line, colored by throttle/brake/coast */}
-        {segments.map((seg, i) => (
-          <path
-            key={i}
-            d={seg.d}
-            fill="none"
-            stroke={PHASE_COLOR[seg.phase]}
-            strokeWidth={1.6}
-            strokeLinejoin="round"
-          />
-        ))}
+          {/* corner apex markers */}
+          {corners.map((corner) => (
+            <g key={corner.number}>
+              <line
+                x1={geometry.x(velocity[corner.apexIdx].s)}
+                x2={geometry.x(velocity[corner.apexIdx].s)}
+                y1={MARGIN.top}
+                y2={HEIGHT - MARGIN.bottom}
+                stroke="rgba(140, 155, 175, 0.18)"
+                strokeDasharray="2 3"
+              />
+              <text
+                x={geometry.x(velocity[corner.apexIdx].s)}
+                y={MARGIN.top + 7}
+                textAnchor="middle"
+                fontSize={8.5}
+                fill="var(--text-faint)"
+                fontFamily="var(--font-mono)"
+              >
+                T{corner.number}
+              </text>
+            </g>
+          ))}
 
-        {/* hover cursor */}
-        {hovered && (
-          <g>
-            <line
-              x1={x(hovered.s)}
-              x2={x(hovered.s)}
-              y1={MARGIN.top}
-              y2={HEIGHT - MARGIN.bottom}
-              stroke="rgba(232, 234, 237, 0.4)"
+          {/* speed line, colored by throttle/brake/coast */}
+          {geometry.segments.map((seg, i) => (
+            <path
+              key={i}
+              d={seg.d}
+              fill="none"
+              stroke={PHASE_COLOR[seg.phase]}
+              strokeWidth={1.6}
+              strokeLinejoin="round"
             />
-            <circle cx={x(hovered.s)} cy={y(hovered.v)} r={3} fill="var(--text)" />
-          </g>
-        )}
-      </svg>
+          ))}
+
+          {/* hover cursor */}
+          {hovered && (
+            <g>
+              <line
+                x1={geometry.x(hovered.s)}
+                x2={geometry.x(hovered.s)}
+                y1={MARGIN.top}
+                y2={HEIGHT - MARGIN.bottom}
+                stroke="rgba(232, 234, 237, 0.4)"
+              />
+              <circle cx={geometry.x(hovered.s)} cy={geometry.y(hovered.v)} r={3} fill="var(--text)" />
+            </g>
+          )}
+        </svg>
+      )}
     </div>
   )
 }

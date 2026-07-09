@@ -1,7 +1,29 @@
-import type { CarSetup, SpeedLimiter } from '@/types'
+import type { CarSetup, Phase, SpeedLimiter } from '@/types'
 import { AIR_DENSITY, GRAVITY, ROLLING_RESISTANCE, V_CEILING } from './constants'
 import { dragForce } from './aero'
 import { remainingLongAccel } from './frictionCircle'
+
+/** Floor on the speed used for segment-time division (guards divide-by-zero). */
+const V_TIME_GUARD = 0.1
+/** Fraction of a car's peak accel/brake capability that reads as coasting. */
+const COAST_FRACTION = 0.03
+
+/**
+ * Coast-band half-width (m/s²) for a given car. Scaled to the car's own peak
+ * accel/brake capability rather than a fixed absolute number: an F1 car's
+ * apex-region aLong swings tens of m/s², so a fixed ~0.25 m/s² band (tuned
+ * for a go-kart) is crossed in a single sample and coast never registers.
+ */
+function coastEpsilon(car: CarSetup): number {
+  return (COAST_FRACTION * Math.max(car.tractionForceMax, car.brakeForceMax)) / car.mass
+}
+
+/** Throttle/brake/coast from the sign of longitudinal acceleration. */
+export function phaseFromALong(aLong: number, epsilon: number): Phase {
+  if (aLong > epsilon) return 'throttle'
+  if (aLong < -epsilon) return 'brake'
+  return 'coast'
+}
 
 const rollForce = (car: CarSetup): number => ROLLING_RESISTANCE * car.mass * GRAVITY
 
@@ -43,8 +65,11 @@ export interface VelocityProfile {
   /** Longitudinal acceleration over the segment leaving each point (m/s²) */
   aLong: number[]
   limiter: SpeedLimiter[]
+  phase: Phase[]
   /** Cumulative lap distance at each point (m) */
   s: number[]
+  /** Cumulative lap time at each point (s) */
+  t: number[]
   lapTime: number
 }
 
@@ -106,15 +131,20 @@ export function computeVelocityProfile(
   }
 
   const s = new Array<number>(n)
+  const t = new Array<number>(n)
   const aLong = new Array<number>(n)
+  const phase = new Array<Phase>(n)
+  const epsilon = coastEpsilon(car)
   let lapTime = 0
   let acc = 0
   for (let i = 0; i < n; i++) {
     s[i] = acc
+    t[i] = lapTime
     acc += segLengths[i]
     const next = (i + 1) % n
     aLong[i] = (v[next] * v[next] - v[i] * v[i]) / (2 * segLengths[i])
-    lapTime += segLengths[i] / Math.max((v[i] + v[next]) / 2, 0.1)
+    phase[i] = phaseFromALong(aLong[i], epsilon)
+    lapTime += segLengths[i] / Math.max((v[i] + v[next]) / 2, V_TIME_GUARD)
   }
-  return { v, aLong, limiter, s, lapTime }
+  return { v, aLong, limiter, phase, s, t, lapTime }
 }

@@ -171,7 +171,7 @@ button {
 
 .stage {
   display: grid;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: 1fr auto auto;
   min-width: 0;
   min-height: 0;
 }
@@ -181,25 +181,6 @@ button {
   background: var(--surface);
   overflow-y: auto;
   min-height: 0;
-}
-
-@media (max-width: 900px) {
-  body {
-    overflow: auto;
-  }
-  .app {
-    height: auto;
-  }
-  .app-main {
-    grid-template-columns: 1fr;
-  }
-  .stage {
-    grid-template-rows: 70vh auto;
-  }
-  .sidebar {
-    border-left: none;
-    border-top: 1px solid var(--border);
-  }
 }
 
 /* ---------- canvas stage ---------- */
@@ -747,4 +728,181 @@ button {
 
 input[type='file'] {
   display: none;
+}
+
+/* ---------- lap simulation HUD ---------- */
+
+.sim-hud {
+  position: absolute;
+  top: 60px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(17, 20, 24, 0.9);
+  width: 188px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.sim-hud-speed {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.sim-hud-speed-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sim-hud-speed-unit {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.sim-hud-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sim-hud-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+
+.sim-hud-bar-fill {
+  height: 100%;
+  transition: width 90ms linear;
+}
+
+.sim-hud-bar.is-throttle .sim-hud-bar-fill {
+  background: var(--throttle);
+}
+
+.sim-hud-bar.is-brake .sim-hud-bar-fill {
+  background: var(--brake);
+}
+
+.sim-hud-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.sim-hud-row > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sim-hud-phase {
+  font-weight: 650;
+  color: var(--text-faint);
+}
+
+.sim-hud-phase.is-throttle {
+  color: var(--throttle);
+}
+
+.sim-hud-phase.is-brake {
+  color: var(--brake);
+}
+
+.sim-hud-time {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ---------- playback controls ---------- */
+
+.playback-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.playback-scrub {
+  flex: 1;
+  min-width: 0;
+}
+
+.playback-scrub .slider {
+  width: 100%;
+}
+
+/* ---------- mobile ---------- */
+
+@media (max-width: 900px) {
+  body {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .app {
+    height: auto;
+    grid-template-rows: auto 1fr;
+  }
+  .app-header {
+    flex-wrap: wrap;
+    height: auto;
+    row-gap: 8px;
+    padding: 10px 12px;
+  }
+  .header-stats {
+    flex-wrap: wrap;
+    flex-basis: 100%;
+    margin-left: 0;
+    gap: 10px 18px;
+  }
+  .app-main {
+    grid-template-columns: 1fr;
+  }
+  .stage {
+    grid-template-rows: 70vh auto auto;
+  }
+  .sidebar {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+  .canvas-hud {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .legend {
+    display: none;
+  }
+  .sim-hud {
+    top: 100px;
+  }
+  .playback-controls {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .playback-scrub {
+    order: 10;
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-tag {
+    display: none;
+  }
 }

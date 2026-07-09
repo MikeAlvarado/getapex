@@ -29,10 +29,12 @@ export function computeRacingLine(track: Track, car: CarSetup): RacingLineResult
 
   const velocity: VelocityPoint[] = profile.v.map((v, i) => ({
     s: profile.s[i],
+    t: profile.t[i],
     v,
     kappa: Math.abs(kappa[i]),
     aLong: profile.aLong[i],
     limiter: profile.limiter[i],
+    phase: profile.phase[i],
   }))
 
   return {

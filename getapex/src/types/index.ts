@@ -44,9 +44,14 @@ export type CarPresetId = 'f1' | 'gt3' | 'street' | 'kart'
 
 export type SpeedLimiter = 'corner' | 'accel' | 'brake'
 
+/** Driver input state over the segment leaving a point, from the sign of `aLong`. */
+export type Phase = 'throttle' | 'brake' | 'coast'
+
 export interface VelocityPoint {
   /** Lap distance at this point (m) */
   s: number
+  /** Cumulative lap time at this point (s) */
+  t: number
   /** Speed (m/s) */
   v: number
   /** Unsigned curvature of the racing line here (1/m) */
@@ -55,6 +60,8 @@ export interface VelocityPoint {
   aLong: number
   /** Which constraint set the speed here */
   limiter: SpeedLimiter
+  /** Throttle/brake/coast, derived from the sign of `aLong` */
+  phase: Phase
 }
 
 export interface Corner {

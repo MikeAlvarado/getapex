@@ -64,6 +64,17 @@ export const strings = {
   'legend.slow': 'Slow',
   'legend.fast': 'Fast',
   'legend.apex': 'Apex',
+
+  'sim.lapTime': 'Lap time',
+  'sim.lap': 'Lap',
+  'sim.corner': 'Corner',
+  'sim.throttle': 'Throttle',
+  'sim.brake': 'Brake',
+  'sim.play': 'Play',
+  'sim.pause': 'Pause',
+  'sim.restart': 'Restart',
+  'sim.loop': 'Loop',
+  'sim.playbackSpeed': 'Speed',
 } as const
 
 export type StringKey = keyof typeof strings

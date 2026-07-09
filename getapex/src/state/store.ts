@@ -48,7 +48,29 @@ export interface UiSlice {
   setIsDrawing: (drawing: boolean) => void
 }
 
-export type AppState = TrackSlice & CarSlice & ResultsSlice & UiSlice
+/** Playback state machine for the lap simulation. */
+export type SimStatus = 'idle' | 'ready' | 'playing' | 'paused'
+
+export interface SimulationSlice {
+  simStatus: SimStatus
+  isPlaying: boolean
+  playbackSpeed: number
+  loop: boolean
+  /** Throttled (~24fps) lap time snapshot for the HUD/scrubber; the canvas
+   * uses a higher-precision clock (see `hooks/usePlayback`) while playing. */
+  elapsedTime: number
+  lapCount: number
+  play: () => void
+  pause: () => void
+  togglePlay: () => void
+  restart: () => void
+  setPlaybackSpeed: (speed: number) => void
+  setLoop: (loop: boolean) => void
+  setElapsedTime: (t: number) => void
+  incrementLap: () => void
+}
+
+export type AppState = TrackSlice & CarSlice & ResultsSlice & UiSlice & SimulationSlice
 
 export const useStore = create<AppState>((set) => ({
   // track
@@ -81,7 +103,49 @@ export const useStore = create<AppState>((set) => ({
   status: { state: 'idle' },
   result: null,
   setStatus: (status) => set({ status }),
-  setResult: (result) => set({ result, status: { state: 'ready' } }),
+  setResult: (result) =>
+    set({
+      result,
+      status: { state: 'ready' },
+      simStatus: 'ready',
+      isPlaying: false,
+      elapsedTime: 0,
+      lapCount: 0,
+    }),
+
+  // simulation
+  simStatus: 'idle',
+  isPlaying: false,
+  playbackSpeed: 1,
+  loop: true,
+  elapsedTime: 0,
+  lapCount: 0,
+  play: () => set((s) => (s.simStatus === 'idle' ? s : { simStatus: 'playing', isPlaying: true })),
+  pause: () =>
+    set((s) => (s.simStatus === 'playing' ? { simStatus: 'paused', isPlaying: false } : s)),
+  togglePlay: () =>
+    set((s) => {
+      if (s.simStatus === 'playing') return { simStatus: 'paused', isPlaying: false }
+      if (s.simStatus === 'paused' || s.simStatus === 'ready') {
+        return { simStatus: 'playing', isPlaying: true }
+      }
+      return s
+    }),
+  restart: () =>
+    set((s) =>
+      s.simStatus === 'idle'
+        ? s
+        : {
+            elapsedTime: 0,
+            lapCount: 0,
+            simStatus: s.simStatus === 'playing' ? 'playing' : 'paused',
+            isPlaying: s.simStatus === 'playing',
+          },
+    ),
+  setPlaybackSpeed: (playbackSpeed) => set({ playbackSpeed }),
+  setLoop: (loop) => set({ loop }),
+  setElapsedTime: (elapsedTime) => set({ elapsedTime }),
+  incrementLap: () => set((s) => ({ lapCount: s.lapCount + 1 })),
 
   // ui
   units: 'metric',

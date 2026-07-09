@@ -42,7 +42,13 @@ export function useRacingLineWorker(): void {
     if (!debounced.track) {
       latestRequestId.current++
       setStatus({ state: 'idle' })
-      useStore.setState({ result: null })
+      useStore.setState({
+        result: null,
+        simStatus: 'idle',
+        isPlaying: false,
+        elapsedTime: 0,
+        lapCount: 0,
+      })
       return
     }
     const requestId = ++latestRequestId.current

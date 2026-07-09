@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '@/state/store'
 import { useRacingLineWorker } from '@/features/racing-line/useRacingLineWorker'
+import { usePlayback } from '@/hooks/usePlayback'
 import { TrackCanvas } from '@/components/canvas/TrackCanvas'
 import { SpeedTrace } from '@/features/telemetry/SpeedTrace'
 import { CornerCards } from '@/features/telemetry/CornerCards'
 import { CarConfigPanel } from '@/features/car-config/CarConfigPanel'
 import { TrackControls } from '@/features/track-editor/TrackControls'
+import { PlaybackControls } from '@/features/simulation/PlaybackControls'
 import { Segmented } from '@/components/ui/Segmented'
 import { formatDistance, formatLapTime, formatSpeed } from '@/lib/units'
 import { t } from '@/i18n/strings'
@@ -39,6 +41,7 @@ function StatValue({ value, large, stale }: { value: string; large?: boolean; st
 
 export function App() {
   useRacingLineWorker()
+  usePlayback()
 
   const result = useStore((s) => s.result)
   const status = useStore((s) => s.status)
@@ -88,6 +91,7 @@ export function App() {
       <div className="app-main">
         <div className="stage">
           <TrackCanvas />
+          <PlaybackControls />
           <SpeedTrace />
         </div>
         <aside className="sidebar">
